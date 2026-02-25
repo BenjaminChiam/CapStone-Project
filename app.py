@@ -259,7 +259,7 @@ with st.sidebar:
     model_choice = st.selectbox("LLM Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
     st.markdown("---")
-    st.caption("Built for Ensign InfoSecurity SOC · Capstone Project 2025-2026")
+    st.caption("Built for Singapore Institute of Technology: University of Applied Learning · Capstone Project 2025-2026")
 
 
 # ── Main Chat Interface ─────────────────────────────────────────────
