@@ -230,8 +230,6 @@ TECHNIQUES: List[Technique] = [
     Technique("T1543.003", "Windows Service", ["TA0003", "TA0004"],
              "Creating or modifying Windows services.",
              is_subtechnique=True, parent_id="T1543", platforms=["Windows"]),
-    Technique("T1053", "Scheduled Task/Job", ["TA0003"], "Using scheduled tasks for persistence.",
-             platforms=["Windows", "Linux", "macOS"]),
     Technique("T1505", "Server Software Component", ["TA0003"],
              "Abusing server software for persistence.", platforms=["Windows", "Linux"]),
     Technique("T1505.003", "Web Shell", ["TA0003"], "Installing web shells on servers.",
