@@ -505,12 +505,21 @@ with tab_upload:
                     st.markdown("### Column Summary")
                     col_info = []
                     for col in parsed_df.columns:
+                        try:
+                            unique_count = int(parsed_df[col].nunique())
+                        except TypeError:
+                            # Columns containing lists (e.g., Nessus ports/tags) can't be hashed
+                            unique_count = "N/A (complex type)"
+                        try:
+                            sample = str(parsed_df[col].dropna().iloc[0])[:100] if parsed_df[col].notna().any() else "N/A"
+                        except Exception:
+                            sample = "N/A"
                         col_info.append({
                             "Column": col,
                             "Type": str(parsed_df[col].dtype),
                             "Non-Null": int(parsed_df[col].notna().sum()),
-                            "Unique": int(parsed_df[col].nunique()),
-                            "Sample": str(parsed_df[col].dropna().iloc[0])[:100] if parsed_df[col].notna().any() else "N/A",
+                            "Unique": unique_count,
+                            "Sample": sample,
                         })
                     st.dataframe(pd.DataFrame(col_info), use_container_width=True, hide_index=True)
 
