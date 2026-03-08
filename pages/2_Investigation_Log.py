@@ -23,6 +23,7 @@ from utils.log_analyzer import (
     load_log_file, detect_log_type, parse_raw_field,
     extract_iocs_from_df, map_logs_to_mitre,
     compute_top_talkers, compute_time_series,
+    LOG_TYPE_LABELS,
 )
 from utils.ml_engine import AnomalyDetector, ThreatClusterer
 
@@ -62,20 +63,7 @@ with tab_upload:
 
                 # Detect log type
                 log_type = detect_log_type(raw_df)
-                type_labels = {
-                    "fortigate_utm": "🔥 FortiGate UTM (Firewall)",
-                    "stream_icmp": "🌐 ICMP Network Stream",
-                    "stream_mapi": "📧 MAPI Email Stream",
-                    "stream_dns": "🔤 DNS Stream",
-                    "stream_http": "🌍 HTTP Stream",
-                    "winregistry": "🪟 Windows Registry",
-                    "sysmon": "🔍 Sysmon",
-                    "wineventlog": "📝 Windows Event Log",
-                    "network_flow": "📡 Network Flow",
-                    "firewall": "🧱 Firewall",
-                    "generic": "📄 Generic CSV",
-                }
-                st.info(f"**Detected Log Type:** {type_labels.get(log_type, log_type)}")
+                st.info(f"**Detected Log Type:** {LOG_TYPE_LABELS.get(log_type, log_type)}")
 
                 # Parse raw field into structured columns
                 with st.spinner("Parsing raw log data..."):
@@ -203,6 +191,58 @@ with tab_upload:
                         st.dataframe(top_data["top_hostnames"].head(20),
                                      use_container_width=True, hide_index=True)
 
+                    # Additional charts based on log type
+                    extra_col1, extra_col2 = st.columns(2)
+                    with extra_col1:
+                        if "http_methods" in top_data:
+                            fig = px.pie(top_data["http_methods"], values="Count", names="Method",
+                                         title="HTTP Methods", color_discrete_sequence=px.colors.qualitative.Pastel)
+                            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(10,14,23,0.8)", height=350)
+                            st.plotly_chart(fig, use_container_width=True)
+
+                        if "severity_distribution" in top_data:
+                            fig = px.bar(top_data["severity_distribution"], x="Severity", y="Count",
+                                         title="Nessus Severity Distribution",
+                                         color="Severity", color_discrete_map={"4": "#ef4444", "3": "#f97316", "2": "#eab308", "1": "#22c55e", "0": "#6b7280"})
+                            fig.update_layout(template="plotly_dark", plot_bgcolor="rgba(10,14,23,0.8)",
+                                              paper_bgcolor="rgba(10,14,23,0.8)", height=350)
+                            st.plotly_chart(fig, use_container_width=True)
+
+                        if "dhcp_opcodes" in top_data:
+                            fig = px.pie(top_data["dhcp_opcodes"], values="Count", names="DHCP Opcode",
+                                         title="DHCP Operations", color_discrete_sequence=px.colors.qualitative.Set3)
+                            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(10,14,23,0.8)", height=350)
+                            st.plotly_chart(fig, use_container_width=True)
+
+                    with extra_col2:
+                        if "top_user_agents" in top_data:
+                            fig = px.bar(top_data["top_user_agents"].head(10), x="Count", y="User-Agent",
+                                         orientation="h", title="Top User Agents",
+                                         color="Count", color_continuous_scale="Tealgrn")
+                            fig.update_layout(template="plotly_dark", plot_bgcolor="rgba(10,14,23,0.8)",
+                                              paper_bgcolor="rgba(10,14,23,0.8)", height=350,
+                                              yaxis=dict(autorange="reversed"))
+                            st.plotly_chart(fig, use_container_width=True)
+
+                        if "plugin_families" in top_data:
+                            fig = px.bar(top_data["plugin_families"].head(10), x="Count", y="Plugin Family",
+                                         orientation="h", title="Nessus Plugin Families",
+                                         color="Count", color_continuous_scale="Oranges")
+                            fig.update_layout(template="plotly_dark", plot_bgcolor="rgba(10,14,23,0.8)",
+                                              paper_bgcolor="rgba(10,14,23,0.8)", height=350,
+                                              yaxis=dict(autorange="reversed"))
+                            st.plotly_chart(fig, use_container_width=True)
+
+                    # Show any remaining top_* tables
+                    for key, table_df in top_data.items():
+                        if key.startswith("top_") and key not in (
+                            "top_source_ips", "top_dest_ips", "top_dest_ports",
+                            "top_hostnames", "top_processes", "top_user_agents"
+                        ):
+                            label = key.replace("top_", "").replace("_", " ").title()
+                            st.markdown(f"### {label}")
+                            st.dataframe(table_df.head(15), use_container_width=True, hide_index=True)
+
                 # ════════════════════════════════════════════════════
                 # TIMELINE TAB
                 # ════════════════════════════════════════════════════
@@ -314,7 +354,7 @@ with tab_upload:
                     st.markdown("Rule-based pattern matching against known adversary behaviors in log data.")
 
                     with st.spinner("Scanning logs for MITRE ATT&CK patterns..."):
-                        mitre_matches = map_logs_to_mitre(parsed_df)
+                        mitre_matches = map_logs_to_mitre(parsed_df, log_type)
 
                     if mitre_matches:
                         st.success(f"**{len(mitre_matches)} technique(s) detected** across {len(set(m['tactic'] for m in mitre_matches))} tactics")
