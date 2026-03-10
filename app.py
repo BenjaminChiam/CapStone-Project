@@ -1,6 +1,6 @@
 """
-🛡️ Cyber Security Threat Hunt Assistant
-Main Streamlit Application — Enhanced with Triaging, Environment Awareness,
+🧠 CognitiveHunt — AI-Enhanced Threat Intelligence Platform
+Main Streamlit Application — Chatbot with Triaging, Environment Awareness,
 DGA Detection, Anomaly Detection, and Multi-Source IOC Enrichment.
 """
 
@@ -16,8 +16,8 @@ from utils.ml_engine import ThreatClusterer, AnomalyDetector, DGADetector
 
 # ── Page Configuration ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Threat Hunt Assistant",
-    page_icon="🛡️",
+    page_title="CognitiveHunt",
+    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -86,6 +86,16 @@ st.markdown("""
         font-size: 0.78rem;
         display: inline-block;
         margin: 2px;
+    }
+
+    /* Rename 'app' to 'Chatbot' in sidebar navigation */
+    [data-testid="stSidebarNav"] li:first-child a span {
+        font-size: 0;
+    }
+    [data-testid="stSidebarNav"] li:first-child a span::before {
+        content: "Chatbot";
+        font-size: 0.875rem;
+        visibility: visible;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -250,7 +260,7 @@ if "environment" not in st.session_state:
 
 # ── Sidebar ─────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🛡️ Threat Hunt Assistant")
+    st.markdown("## 🧠 CognitiveHunt")
     st.markdown('<div class="status-banner">🟢 System Online</div>', unsafe_allow_html=True)
 
     # Show environment badges
@@ -361,7 +371,7 @@ with st.sidebar:
 
 
 # ── Main Chat Interface ─────────────────────────────────────────────
-st.markdown("# 🛡️ Threat Hunt Assistant")
+st.markdown("# 🧠 CognitiveHunt — AI-Enhanced Threat Intelligence Platform")
 st.markdown(
     "Ask me about IOCs, threat actors, MITRE ATT&CK techniques, detection rules, "
     "or paste indicators for analysis. I provide **triaging advice** tailored to your environment."
