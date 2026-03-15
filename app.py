@@ -372,6 +372,7 @@ with st.sidebar:
     st.markdown("### ⚙️ Configuration")
     model_choice = st.selectbox("LLM Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
+    st.caption("Lower = more precise & consistent (best for analysis). Higher = more creative & varied.")
 
     # ── API Source Toggles ──────────────────────────────────────────
     st.markdown("---")

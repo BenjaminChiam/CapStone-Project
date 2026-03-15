@@ -121,11 +121,16 @@ with tab1:
             techs = get_parent_techniques_by_tactic(tactic.id)
             for tech in techs[:8]:
                 if selected_group and tech.id in selected_group.technique_ids:
-                    st.markdown(f"🔴 `{tech.id}`")
+                    st.markdown(f"🔴 `{tech.id}` **{tech.name[:22]}**")
                 else:
-                    st.caption(f"`{tech.id}` {tech.name[:18]}")
+                    st.caption(f"`{tech.id}` {tech.name[:22]}")
             if len(techs) > 8:
-                st.caption(f"... +{len(techs)-8} more")
+                with st.expander(f"... +{len(techs)-8} more"):
+                    for tech in techs[8:]:
+                        if selected_group and tech.id in selected_group.technique_ids:
+                            st.markdown(f"🔴 `{tech.id}` **{tech.name[:22]}**")
+                        else:
+                            st.caption(f"`{tech.id}` {tech.name[:22]}")
 
 
 # ════════════════════════════════════════════════════════════════════
