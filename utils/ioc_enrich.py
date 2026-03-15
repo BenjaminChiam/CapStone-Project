@@ -33,11 +33,13 @@ class IOCEnricher:
         shodan_api_key: str = "",
         abuseipdb_api_key: str = "",
         greynoise_api_key: str = "",
+        whoisxml_api_key: str = "",
     ):
         self.vt_api_key = vt_api_key
         self.shodan_api_key = shodan_api_key
         self.abuseipdb_api_key = abuseipdb_api_key
         self.greynoise_api_key = greynoise_api_key
+        self.whoisxml_api_key = whoisxml_api_key
 
     # ── IOC Type Detection ──────────────────────────────────────────
     @staticmethod
@@ -282,23 +284,50 @@ class IOCEnricher:
     # ── 7. WHOIS Lookup ─────────────────────────────────────────────
     def _query_whois(self, ioc: str, ioc_type: str) -> dict:
         """
-        Basic WHOIS information via socket connection.
+        WHOIS lookup via WhoisXML API (if key provided) or raw socket fallback.
         Useful for checking domain age, registrar, and registration dates.
         Newly registered domains are a strong phishing indicator.
         """
         if ioc_type not in ("domain", "ip"):
             return {"source": "whois", "note": "WHOIS supports domain and IP lookups"}
 
-        try:
-            whois_server = "whois.iana.org"
-            if ioc_type == "ip":
-                whois_server = "whois.arin.net"
+        # Prefer WhoisXML API if key is available
+        if self.whoisxml_api_key:
+            try:
+                url = "https://www.whoisxmlapi.com/whoisserver/WhoisService"
+                params = {
+                    "apiKey": self.whoisxml_api_key,
+                    "domainName": ioc,
+                    "outputFormat": "JSON",
+                }
+                resp = requests.get(url, params=params, timeout=15)
+                if resp.status_code == 200:
+                    data = resp.json().get("WhoisRecord", {})
+                    return {
+                        "source": "whoisxml_api",
+                        "domain_name": data.get("domainName", "N/A"),
+                        "registrar": data.get("registrarName", "N/A"),
+                        "creation_date": data.get("createdDateNormalized", "N/A"),
+                        "expiration_date": data.get("expiresDateNormalized", "N/A"),
+                        "updated_date": data.get("updatedDateNormalized", "N/A"),
+                        "registrant_country": data.get("registrant", {}).get("country", "N/A"),
+                        "registrant_org": data.get("registrant", {}).get("organization", "N/A"),
+                        "name_servers": [ns.get("host", "") for ns in data.get("nameServers", {}).get("hostNames", []) if isinstance(ns, dict)] if isinstance(data.get("nameServers", {}).get("hostNames"), list) else data.get("nameServers", {}).get("hostNames", []),
+                        "domain_age_days": data.get("estimatedDomainAge", "N/A"),
+                        "contact_email": data.get("contactEmail", "N/A"),
+                    }
+                else:
+                    return {"source": "whoisxml_api", "error": f"HTTP {resp.status_code}"}
+            except requests.RequestException as e:
+                return {"source": "whoisxml_api", "error": str(e)}
 
+        # Fallback: raw socket WHOIS
+        try:
+            whois_server = "whois.iana.org" if ioc_type == "domain" else "whois.arin.net"
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(10)
             s.connect((whois_server, 43))
             s.send((ioc + "\r\n").encode())
-
             response = b""
             while True:
                 data = s.recv(4096)
@@ -306,31 +335,20 @@ class IOCEnricher:
                     break
                 response += data
             s.close()
-
             raw_text = response.decode("utf-8", errors="ignore")
-
-            # Parse key fields
-            parsed = {"source": "whois", "raw_length": len(raw_text)}
+            parsed = {"source": "whois_socket", "raw_length": len(raw_text)}
             for line in raw_text.split("\n"):
-                line_lower = line.lower().strip()
-                if "registrar:" in line_lower:
+                ll = line.lower().strip()
+                if "registrar:" in ll:
                     parsed["registrar"] = line.split(":", 1)[-1].strip()
-                elif "creation date:" in line_lower or "created:" in line_lower:
+                elif "creation date:" in ll or "created:" in ll:
                     parsed["creation_date"] = line.split(":", 1)[-1].strip()
-                elif "expiration date:" in line_lower or "expiry date:" in line_lower:
+                elif "expiration date:" in ll or "expiry date:" in ll:
                     parsed["expiration_date"] = line.split(":", 1)[-1].strip()
-                elif "updated date:" in line_lower:
-                    parsed["updated_date"] = line.split(":", 1)[-1].strip()
-                elif "registrant country:" in line_lower or "country:" in line_lower:
+                elif "registrant country:" in ll or "country:" in ll:
                     if "country" not in parsed:
                         parsed["country"] = line.split(":", 1)[-1].strip()
-                elif "name server:" in line_lower or "nserver:" in line_lower:
-                    parsed.setdefault("name_servers", []).append(line.split(":", 1)[-1].strip())
-                elif "refer:" in line_lower:
-                    parsed["refer"] = line.split(":", 1)[-1].strip()
-
             return parsed
-
         except Exception as e:
             return {"source": "whois", "error": str(e)}
 
@@ -415,32 +433,62 @@ class IOCEnricher:
         }
 
     # ── Main Enrichment Orchestrator ────────────────────────────────
-    def enrich(self, ioc: str) -> dict:
+    def enrich(self, ioc: str, disabled_sources: set = None) -> dict:
         """
         Main enrichment function. Queries all relevant sources
         and returns a consolidated report with consensus scoring.
+        disabled_sources: set of source names to skip (e.g., {"virustotal", "shodan"})
         """
         ioc = ioc.strip()
         ioc_type = self.detect_ioc_type(ioc)
+        disabled = disabled_sources or set()
 
         result = {
             "ioc": ioc,
             "ioc_type": ioc_type,
             "timestamp": datetime.utcnow().isoformat() + "Z",
+            "disabled_sources": list(disabled),
         }
 
         if ioc_type == "unknown":
             result["error"] = "Could not determine IOC type"
             return result
 
-        # Query all sources
-        result["virustotal"] = self._query_virustotal(ioc, ioc_type)
-        result["shodan"] = self._query_shodan(ioc, ioc_type)
-        result["abuseipdb"] = self._query_abuseipdb(ioc, ioc_type)
-        result["greynoise"] = self._query_greynoise(ioc, ioc_type)
-        result["urlhaus"] = self._query_urlhaus(ioc, ioc_type)
-        result["malwarebazaar"] = self._query_malwarebazaar(ioc, ioc_type)
-        result["whois"] = self._query_whois(ioc, ioc_type)
+        # Query enabled sources only
+        if "virustotal" not in disabled:
+            result["virustotal"] = self._query_virustotal(ioc, ioc_type)
+        else:
+            result["virustotal"] = {"source": "virustotal", "status": "disabled"}
+
+        if "shodan" not in disabled:
+            result["shodan"] = self._query_shodan(ioc, ioc_type)
+        else:
+            result["shodan"] = {"source": "shodan", "status": "disabled"}
+
+        if "abuseipdb" not in disabled:
+            result["abuseipdb"] = self._query_abuseipdb(ioc, ioc_type)
+        else:
+            result["abuseipdb"] = {"source": "abuseipdb", "status": "disabled"}
+
+        if "greynoise" not in disabled:
+            result["greynoise"] = self._query_greynoise(ioc, ioc_type)
+        else:
+            result["greynoise"] = {"source": "greynoise", "status": "disabled"}
+
+        if "urlhaus" not in disabled:
+            result["urlhaus"] = self._query_urlhaus(ioc, ioc_type)
+        else:
+            result["urlhaus"] = {"source": "urlhaus", "status": "disabled"}
+
+        if "malwarebazaar" not in disabled:
+            result["malwarebazaar"] = self._query_malwarebazaar(ioc, ioc_type)
+        else:
+            result["malwarebazaar"] = {"source": "malwarebazaar", "status": "disabled"}
+
+        if "whois" not in disabled:
+            result["whois"] = self._query_whois(ioc, ioc_type)
+        else:
+            result["whois"] = {"source": "whois", "status": "disabled"}
 
         # Calculate consensus
         result["consensus"] = self.calculate_consensus_score(result)

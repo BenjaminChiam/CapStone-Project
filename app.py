@@ -115,6 +115,7 @@ def init_enricher():
         shodan_api_key=st.secrets.get("SHODAN_API_KEY", os.getenv("SHODAN_API_KEY", "")),
         abuseipdb_api_key=st.secrets.get("ABUSEIPDB_API_KEY", os.getenv("ABUSEIPDB_API_KEY", "")),
         greynoise_api_key=st.secrets.get("GREYNOISE_API_KEY", os.getenv("GREYNOISE_API_KEY", "")),
+        whoisxml_api_key=st.secrets.get("WHOISXML_API_KEY", os.getenv("WHOISXML_API_KEY", "")),
     )
 
 
@@ -302,9 +303,13 @@ with st.sidebar:
         clear_btn = st.button("🗑️ Clear", use_container_width=True)
 
     # ── Handle sidebar actions ──────────────────────────────────────
+    # Compute disabled sources from toggles
+    disabled_sources = {name for name, enabled in st.session_state.get("api_toggles", {}).items() if not enabled}
+    active_count = len(st.session_state.get("api_toggles", {})) - len(disabled_sources)
+
     if enrich_btn and ioc_input:
-        with st.spinner("Enriching IOC across 7 sources..."):
-            results = enricher.enrich(ioc_input)
+        with st.spinner(f"Enriching IOC across {active_count} source(s)..."):
+            results = enricher.enrich(ioc_input, disabled_sources=disabled_sources)
             st.session_state.enrichment_results = results
 
             # Display consensus score prominently
@@ -324,9 +329,12 @@ with st.sidebar:
             st.session_state.messages.append({"role": "assistant", "content": summary})
 
     if mitre_btn and ioc_input:
-        with st.spinner("Mapping to MITRE ATT&CK..."):
-            mapping = mitre_mapper.map_ioc(ioc_input, st.session_state.enrichment_results)
-            st.json(mapping)
+        if st.session_state.get("llm_enabled", True):
+            with st.spinner("Mapping to MITRE ATT&CK..."):
+                mapping = mitre_mapper.map_ioc(ioc_input, st.session_state.enrichment_results)
+                st.json(mapping)
+        else:
+            st.warning("OpenAI GPT is disabled. Enable it in API Sources to use MITRE mapping.")
 
     if sigma_btn and ioc_input:
         with st.spinner("Generating Sigma rule..."):
@@ -366,6 +374,67 @@ with st.sidebar:
     st.markdown("### ⚙️ Configuration")
     model_choice = st.selectbox("LLM Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
+
+    # ── API Source Toggles ──────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 🔌 API Sources")
+    st.caption("Enable or disable enrichment APIs")
+
+    # Detect which APIs have keys configured
+    api_status = {
+        "virustotal": bool(st.secrets.get("VIRUSTOTAL_API_KEY", os.getenv("VIRUSTOTAL_API_KEY", ""))),
+        "shodan": bool(st.secrets.get("SHODAN_API_KEY", os.getenv("SHODAN_API_KEY", ""))),
+        "abuseipdb": bool(st.secrets.get("ABUSEIPDB_API_KEY", os.getenv("ABUSEIPDB_API_KEY", ""))),
+        "greynoise": bool(st.secrets.get("GREYNOISE_API_KEY", os.getenv("GREYNOISE_API_KEY", ""))),
+        "whois": bool(st.secrets.get("WHOISXML_API_KEY", os.getenv("WHOISXML_API_KEY", ""))),
+        "urlhaus": True,       # No key needed
+        "malwarebazaar": True,  # No key needed
+    }
+
+    # Initialize toggle state
+    if "api_toggles" not in st.session_state:
+        st.session_state.api_toggles = {name: True for name in api_status}
+
+    api_labels = {
+        "virustotal": "🦠 VirusTotal",
+        "shodan": "🔍 Shodan",
+        "abuseipdb": "🚨 AbuseIPDB",
+        "greynoise": "📡 GreyNoise",
+        "whois": "🌐 WHOIS (WhoisXML)",
+        "urlhaus": "🔗 URLhaus (free)",
+        "malwarebazaar": "🧬 MalwareBazaar (free)",
+    }
+
+    for api_name, label in api_labels.items():
+        has_key = api_status[api_name]
+        if has_key:
+            st.session_state.api_toggles[api_name] = st.checkbox(
+                f"{label} ✅", value=st.session_state.api_toggles.get(api_name, True),
+                key=f"toggle_{api_name}",
+            )
+        else:
+            st.checkbox(f"{label} ❌ No key", value=False, disabled=True, key=f"toggle_{api_name}")
+            st.session_state.api_toggles[api_name] = False
+
+    # LLM toggle
+    st.markdown("---")
+    openai_configured = bool(st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")))
+    if openai_configured:
+        if "llm_enabled" not in st.session_state:
+            st.session_state.llm_enabled = True
+        st.session_state.llm_enabled = st.checkbox(
+            "🤖 OpenAI GPT (Chat + MITRE) ✅",
+            value=st.session_state.get("llm_enabled", True),
+            key="toggle_openai",
+        )
+    else:
+        st.checkbox("🤖 OpenAI GPT ❌ No key", value=False, disabled=True, key="toggle_openai")
+
+    # Count enabled
+    enabled_count = sum(1 for v in st.session_state.api_toggles.values() if v)
+    total_count = len(api_labels)
+    st.caption(f"{enabled_count}/{total_count} enrichment APIs active")
+
     st.markdown("---")
     st.caption("Built for Singapore Institute of Technology: University of Applied Learning · Capstone Project 2025-2026")
 
@@ -396,6 +465,9 @@ if prompt := st.chat_input("Paste an IOC, describe an alert, or ask a threat hun
                 "or set the `OPENAI_API_KEY` environment variable."
             )
             response_text = "I need an OpenAI API key to function. Please configure it in the settings."
+        elif not st.session_state.get("llm_enabled", True):
+            st.warning("⚠️ OpenAI GPT is disabled. Enable it in the **API Sources** section in the sidebar.")
+            response_text = "The LLM chatbot is currently disabled. Toggle it on in the sidebar under API Sources."
         else:
             # Build dynamic system prompt with environment context
             system_prompt = build_system_prompt()
