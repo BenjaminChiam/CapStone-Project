@@ -17,16 +17,14 @@ An AI-powered threat hunting and IOC analysis platform built with **Streamlit**,
 | **Environment-Aware Responses** | Tailors SIEM queries (SPL, KQL, EQL) and tool recommendations to the analyst's configured security stack |
 | **Detection Rule Drafting** | Generates Sigma, YARA, and SIEM-native queries on demand |
 
-### 🔍 IOC Enrichment (7 Sources)
+### 🔍 IOC Enrichment (5 Sources)
 | Source | Intelligence |
 |---|---|
 | **VirusTotal** | File/IP/domain/URL reputation and detection ratios |
 | **Shodan** | Open ports, banners, ASN, vulnerabilities, SSL/JARM fingerprints |
 | **AbuseIPDB** | IP abuse reports, confidence scoring, Tor exit node detection |
-| **GreyNoise** | Internet noise vs. targeted attack classification |
-| **URLhaus** | Malicious URL database (abuse.ch) |
-| **MalwareBazaar** | Malware sample lookup by hash (abuse.ch) |
-| **WHOIS** | Domain registration age, registrar, and ownership data |
+| **URLhaus** | Malicious URL database (abuse.ch) — no key required |
+| **MalwareBazaar** | Malware sample lookup by hash (abuse.ch) — no key required |
 
 ### 🤖 Machine Learning (5 Engines)
 | Engine | Purpose |
@@ -68,7 +66,7 @@ Log analysis includes: auto-detection, IOC extraction, 44 MITRE ATT&CK detection
 | Feature | Description |
 |---|---|
 | **Sigma Rule Generator** | Auto-generates valid .yml detection rules for IPs, domains, and file hashes |
-| **Consensus Scoring** | Weighted multi-source voting algorithm (7 sources) for IOC risk assessment |
+| **Consensus Scoring** | Weighted multi-source voting algorithm (5 sources) for IOC risk assessment |
 | **Environment Profiler** | Configure SIEM, EDR, firewall, cloud, OS, log sources, compliance frameworks |
 | **Investigation Log** | Full session history with search, JSON/CSV export for audit trails |
 | **IOC Export** | Extract and export IOCs from uploaded logs as JSON |
@@ -81,7 +79,7 @@ Log analysis includes: auto-detection, IOC extraction, 44 MITRE ATT&CK detection
 
 - Python 3.10+
 - OpenAI API key ([get one here](https://platform.openai.com/api-keys))
-- Optional: VirusTotal, Shodan, AbuseIPDB, GreyNoise API keys
+- Optional: VirusTotal, Shodan, AbuseIPDB API keys
 
 ### Local Setup
 
@@ -128,7 +126,6 @@ OPENAI_API_KEY = "sk-..."
 VIRUSTOTAL_API_KEY = "..."
 SHODAN_API_KEY = "..."
 ABUSEIPDB_API_KEY = "..."
-GREYNOISE_API_KEY = "..."
 ```
 
 5. Click **Deploy**
@@ -147,7 +144,7 @@ CapStone-Project/
 │   └── 4_MITRE ATT&CK.py          # ATT&CK Navigator, group analysis, coverage tracker
 ├── utils/
 │   ├── __init__.py
-│   ├── ioc_enrich.py               # 7-source IOC enrichment pipeline
+│   ├── ioc_enrich.py               # 5-source IOC enrichment pipeline
 │   ├── log_analyzer.py             # Log parsers, IOC extraction, 44 MITRE detection rules
 │   ├── mitre_attack_data.py        # ATT&CK data: 14 tactics, 120+ techniques, 10 APTs, 10 tools
 │   ├── mitre_data.py               # Local MITRE technique ID validation dictionary (400+)
@@ -184,9 +181,9 @@ CapStone-Project/
 │  └────┬────┘  └──────────┘  │ (11 types│  │ (14 Tactics,       │ │
 │       │                     └──────────┘  │  120+ Techniques,   │ │
 │  ┌────┴──────────────────────────────┐    │  10 APT Groups,     │ │
-│  │    IOC Enrichment Pipeline (x7)   │    │  10 Software)       │ │
-│  │  VT│Shodan│AbuseIPDB│GreyNoise   │    └────────────────────┘ │
-│  │  URLhaus│MalwareBazaar│WHOIS      │                           │
+│  │    IOC Enrichment Pipeline (x5)   │    │  10 Software)       │ │
+│  │  VT │ Shodan │ AbuseIPDB         │    └────────────────────┘ │
+│  │  URLhaus │ MalwareBazaar         │                           │
 │  └──────────────┬────────────────────┘                           │
 │                 │                                                 │
 │  ┌──────────────┴──────────────────────────────────────────┐     │
@@ -208,7 +205,7 @@ CapStone-Project/
 - *"Triage this alert: multiple failed logins from 10.0.0.50 followed by a successful login at 3am"*
 
 ### Quick IOC Tools (Sidebar)
-1. Paste an IOC → Click **🔍 Enrich** for 7-source analysis
+1. Paste an IOC → Click **🔍 Enrich** for 5-source analysis
 2. Click **🎯 MITRE** for ATT&CK mapping with LLM reasoning
 3. Click **📝 Sigma** to generate and download a detection rule
 4. Click **🧬 DGA** for Domain Generation Algorithm analysis
@@ -245,7 +242,7 @@ MIT License — See [LICENSE](LICENSE) for details.
 - [MITRE ATT&CK Data Model](https://github.com/mitre-attack/attack-data-model) — Schema reference for ATT&CK data structures
 - [Streamlit](https://streamlit.io/) — Application framework
 - [OpenAI](https://openai.com/) — GPT-4o API for LLM-powered analysis
-- [VirusTotal](https://www.virustotal.com/), [Shodan](https://www.shodan.io/), [AbuseIPDB](https://www.abuseipdb.com/), [GreyNoise](https://www.greynoise.io/) — Threat intelligence APIs
+- [VirusTotal](https://www.virustotal.com/), [Shodan](https://www.shodan.io/), [AbuseIPDB](https://www.abuseipdb.com/) — Threat intelligence APIs
 - [abuse.ch](https://abuse.ch/) — URLhaus and MalwareBazaar malware databases
 - [Sigma](https://github.com/SigmaHQ/sigma) — Open standard for detection rules
 - [Splunk BOTSv1](https://github.com/splunk/botsv1) — Sample log dataset used for testing

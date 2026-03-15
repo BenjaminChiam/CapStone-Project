@@ -114,8 +114,6 @@ def init_enricher():
         vt_api_key=st.secrets.get("VIRUSTOTAL_API_KEY", os.getenv("VIRUSTOTAL_API_KEY", "")),
         shodan_api_key=st.secrets.get("SHODAN_API_KEY", os.getenv("SHODAN_API_KEY", "")),
         abuseipdb_api_key=st.secrets.get("ABUSEIPDB_API_KEY", os.getenv("ABUSEIPDB_API_KEY", "")),
-        greynoise_api_key=st.secrets.get("GREYNOISE_API_KEY", os.getenv("GREYNOISE_API_KEY", "")),
-        whoisxml_api_key=st.secrets.get("WHOISXML_API_KEY", os.getenv("WHOISXML_API_KEY", "")),
     )
 
 
@@ -385,8 +383,6 @@ with st.sidebar:
         "virustotal": bool(st.secrets.get("VIRUSTOTAL_API_KEY", os.getenv("VIRUSTOTAL_API_KEY", ""))),
         "shodan": bool(st.secrets.get("SHODAN_API_KEY", os.getenv("SHODAN_API_KEY", ""))),
         "abuseipdb": bool(st.secrets.get("ABUSEIPDB_API_KEY", os.getenv("ABUSEIPDB_API_KEY", ""))),
-        "greynoise": bool(st.secrets.get("GREYNOISE_API_KEY", os.getenv("GREYNOISE_API_KEY", ""))),
-        "whois": bool(st.secrets.get("WHOISXML_API_KEY", os.getenv("WHOISXML_API_KEY", ""))),
         "urlhaus": True,       # No key needed
         "malwarebazaar": True,  # No key needed
     }
@@ -399,8 +395,6 @@ with st.sidebar:
         "virustotal": "🦠 VirusTotal",
         "shodan": "🔍 Shodan",
         "abuseipdb": "🚨 AbuseIPDB",
-        "greynoise": "📡 GreyNoise",
-        "whois": "🌐 WHOIS (WhoisXML)",
         "urlhaus": "🔗 URLhaus (free)",
         "malwarebazaar": "🧬 MalwareBazaar (free)",
     }
