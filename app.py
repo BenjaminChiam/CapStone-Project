@@ -22,10 +22,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS (Glass-morphism SOC dark theme) ──────────────────────
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+# ── Theme State ─────────────────────────────────────────────────────
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
+
+# ── Dynamic CSS Theme ───────────────────────────────────────────────
+_dark_css = """
     .stApp {
         background: linear-gradient(135deg, #0a0e17 0%, #111827 50%, #0d1321 100%);
     }
@@ -40,15 +42,9 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.95);
         border-right: 1px solid rgba(56, 189, 248, 0.1);
     }
-    h1, h2, h3 { font-family: 'Inter', sans-serif !important; }
-    code, .stCode { font-family: 'JetBrains Mono', monospace !important; }
     .stButton > button {
         background: linear-gradient(135deg, #1e3a5f, #0ea5e9) !important;
         color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
     }
     .stButton > button:hover {
         background: linear-gradient(135deg, #0ea5e9, #38bdf8) !important;
@@ -87,16 +83,112 @@ st.markdown("""
         display: inline-block;
         margin: 2px;
     }
+"""
+
+_light_css = """
+    .stApp {
+        background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f8fafc 100%);
+    }
+    .stChatMessage {
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+    section[data-testid="stSidebar"] {
+        background: rgba(248, 250, 252, 0.98);
+        border-right: 1px solid rgba(15, 23, 42, 0.08);
+    }
+    section[data-testid="stSidebar"] * {
+        color: #1e293b !important;
+    }
+    section[data-testid="stSidebar"] .stCaption p,
+    section[data-testid="stSidebar"] .stCaption span {
+        color: #64748b !important;
+    }
+    .stButton > button {
+        background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;
+        color: white !important;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    }
+    .stTextInput > div > div > input,
+    .stChatInput > div > div > textarea {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(15, 23, 42, 0.15) !important;
+        color: #1e293b !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stMetric"] {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 10px;
+        padding: 12px;
+    }
+    [data-testid="stMetric"] label, [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #1e293b !important;
+    }
+    .status-banner {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 8px;
+        padding: 8px 16px;
+        color: #047857;
+        font-size: 0.85rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .env-badge {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        color: #4f46e5;
+        font-size: 0.78rem;
+        display: inline-block;
+        margin: 2px;
+    }
+    /* Fix text colors for light mode */
+    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
+    h1, h2, h3, h4, h5, h6 {
+        color: #1e293b !important;
+    }
+    .stCaption p, .stCaption span {
+        color: #64748b !important;
+    }
+    code {
+        color: #6366f1 !important;
+        background: rgba(99, 102, 241, 0.08) !important;
+    }
+"""
+
+_theme_css = _dark_css if st.session_state.dark_mode else _light_css
+
+st.markdown(f"""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+    h1, h2, h3 {{ font-family: 'Inter', sans-serif !important; }}
+    code, .stCode {{ font-family: 'JetBrains Mono', monospace !important; }}
+    .stButton > button {{
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }}
+    {_theme_css}
 
     /* Rename 'app' to 'Chatbot' in sidebar navigation */
-    [data-testid="stSidebarNav"] li:first-child a span {
+    [data-testid="stSidebarNav"] li:first-child a span {{
         font-size: 0;
-    }
-    [data-testid="stSidebarNav"] li:first-child a span::before {
+    }}
+    [data-testid="stSidebarNav"] li:first-child a span::before {{
         content: "Chatbot";
         font-size: 0.875rem;
         visibility: visible;
-    }
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -373,6 +465,13 @@ with st.sidebar:
     model_choice = st.selectbox("LLM Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
     st.caption("Lower = more precise & consistent (best for analysis). Higher = more creative & varied.")
+
+    # Theme toggle
+    theme_label = "🌙 Dark Mode" if st.session_state.dark_mode else "☀️ Light Mode"
+    new_mode = st.toggle(theme_label, value=st.session_state.dark_mode, key="theme_toggle")
+    if new_mode != st.session_state.dark_mode:
+        st.session_state.dark_mode = new_mode
+        st.rerun()
 
     # ── API Source Toggles ──────────────────────────────────────────
     st.markdown("---")

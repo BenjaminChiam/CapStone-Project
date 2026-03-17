@@ -232,9 +232,16 @@ env["additional_context"] = st.text_area(
 # ════════════════════════════════════════════════════════════════════
 st.markdown("---")
 
-if st.button("💾 Save Environment Profile", use_container_width=True, type="primary"):
-    st.session_state.environment = env
-    st.success("Environment profile saved! The chatbot will now use this context for tailored advice.")
+btn_col1, btn_col2 = st.columns([3, 1])
+with btn_col1:
+    if st.button("💾 Save Environment Profile", use_container_width=True, type="primary"):
+        st.session_state.environment = env
+        st.success("Environment profile saved! The chatbot will now use this context for tailored advice.")
+
+with btn_col2:
+    if st.button("🗑️ Clear All", use_container_width=True):
+        st.session_state.environment = {}
+        st.rerun()
 
 # Show current profile summary
 if any(v for k, v in env.items() if v and v != "Not Set"):
