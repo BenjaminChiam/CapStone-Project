@@ -13,6 +13,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+from utils.ai_chat import render_ai_analysis
 from utils.mitre_attack_data import (
     TACTICS, TECHNIQUES, GROUPS, SOFTWARE, MITIGATIONS,
     get_techniques_by_tactic, get_parent_techniques_by_tactic,
@@ -219,6 +220,25 @@ with tab2:
                 st.markdown(f"### Detection Data Sources")
                 st.markdown(", ".join(tech.data_sources))
 
+            # AI Analysis for this technique
+            tech_summary = {
+                "technique": tech.id,
+                "name": tech.name,
+                "description": tech.description,
+                "tactics": [t.name for t in TACTICS if t.id in tech.tactic_ids],
+                "platforms": tech.platforms,
+                "groups_using": [g.name for g in get_groups_using_technique(tech.id)],
+                "software_using": [s.name for s in get_software_using_technique(tech.id)],
+                "mitigations": [m.name for m in get_mitigations_for_technique(tech.id)],
+                "sub_techniques": [f"{s.id}: {s.name}" for s in get_subtechniques(tech.id)],
+            }
+            render_ai_analysis(
+                tech_summary,
+                context_label=f"MITRE ATT&CK technique {tech.id}",
+                page_key=f"technique_{tech.id}",
+                system_context="Provide hunting hypotheses, detection strategies, and real-world examples of how this technique is used by threat actors. Suggest specific log sources and queries to detect it.",
+            )
+
 
 # ════════════════════════════════════════════════════════════════════
 # TAB 3: Group Analysis
@@ -317,6 +337,23 @@ with tab3:
                 st.markdown("**Shared Techniques:**")
                 shared_names = [f"`{tid}` {get_technique_by_id(tid).name}" for tid in shared if get_technique_by_id(tid)]
                 st.markdown(" | ".join(shared_names[:15]))
+
+        # AI Analysis for the selected group
+        group_summary = {
+            "group": group.name,
+            "aliases": group.aliases,
+            "country": group.country,
+            "description": group.description,
+            "technique_count": len(group.technique_ids),
+            "techniques": [f"{tid}: {get_technique_by_id(tid).name}" for tid in group.technique_ids[:20] if get_technique_by_id(tid)],
+            "tactic_coverage": dict(tactic_counts) if tactic_counts else {},
+        }
+        render_ai_analysis(
+            group_summary,
+            context_label=f"threat actor group {group.name}",
+            page_key=f"group_{group.id}",
+            system_context="Provide a threat intelligence brief on this APT group: their targets, motivations, notable campaigns, preferred TTPs, and recommended defensive priorities for a SOC team.",
+        )
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -417,6 +454,16 @@ with tab4:
         margin=dict(b=120),
     )
     st.plotly_chart(fig_cov, use_container_width=True)
+
+    # AI Analysis for coverage gaps
+    if covered > 0 or any(d["Gap"] > 0 for d in cov_data):
+        render_ai_analysis(
+            {"total_techniques": total, "covered": covered, "coverage_pct": round(pct, 1),
+             "by_tactic": cov_data},
+            context_label="detection coverage gaps",
+            page_key="coverage",
+            system_context="Analyze the SOC's MITRE ATT&CK detection coverage. Identify the most critical gaps, recommend which uncovered techniques to prioritize based on real-world threat prevalence, and suggest data sources needed.",
+        )
 
 
 # ════════════════════════════════════════════════════════════════════

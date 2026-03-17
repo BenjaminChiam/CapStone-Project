@@ -8,6 +8,7 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from utils.ml_engine import ThreatClusterer, AnomalyDetector, DGADetector
+from utils.ai_chat import render_ai_analysis
 
 st.set_page_config(page_title="ML Analysis", page_icon="📊", layout="wide")
 st.title("📊 ML Threat Analysis")
@@ -92,6 +93,14 @@ x9z8y7.ru,90"""
                              "subdomain_depth", "cluster", "cluster_label"]],
                          use_container_width=True, hide_index=True)
 
+            # AI Analysis
+            render_ai_analysis(
+                df[["ioc", "entropy", "risk_score", "cluster_label"]].to_dict(),
+                context_label="cluster analysis results",
+                page_key="cluster",
+                system_context="Focus on identifying potential threat campaigns, DGA patterns, and C2 infrastructure based on the cluster groupings.",
+            )
+
 # ════════════════════════════════════════════════════════════════════
 # TAB 2: Anomaly Detection
 # ════════════════════════════════════════════════════════════════════
@@ -145,6 +154,14 @@ with tab2:
                 "anomaly_score", ascending=False
             )
             st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+            # AI Analysis
+            render_ai_analysis(
+                display_df.to_dict(),
+                context_label="anomaly detection results",
+                page_key="anomaly",
+                system_context="Focus on which anomalous IOCs are most likely to be genuine threats vs false positives, and recommend investigation priorities.",
+            )
 
 # ════════════════════════════════════════════════════════════════════
 # TAB 3: DGA Scanner
@@ -207,3 +224,11 @@ with tab3:
 
         st.markdown("### Detailed Results")
         st.dataframe(df, use_container_width=True, hide_index=True)
+
+        # AI Analysis
+        render_ai_analysis(
+            df.to_dict(),
+            context_label="DGA domain scan results",
+            page_key="dga",
+            system_context="Focus on which domains are most likely DGA-generated, potential malware families, and recommended blocking actions.",
+        )

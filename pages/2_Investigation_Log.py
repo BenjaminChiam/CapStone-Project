@@ -26,6 +26,7 @@ from utils.log_analyzer import (
     LOG_TYPE_LABELS,
 )
 from utils.ml_engine import AnomalyDetector, ThreatClusterer
+from utils.ai_chat import render_ai_analysis
 
 st.set_page_config(page_title="Investigation Log", page_icon="📋", layout="wide")
 st.title("📋 Investigation Log & Log Analyzer")
@@ -412,6 +413,14 @@ with tab_upload:
                                         st.code(evidence[:500], language="text")
                     else:
                         st.info("No MITRE ATT&CK patterns detected in this log file.")
+
+                    if mitre_matches:
+                        render_ai_analysis(
+                            mitre_matches,
+                            context_label="MITRE ATT&CK log detections",
+                            page_key=f"log_mitre_{uploaded_file.name}",
+                            system_context="Analyze these MITRE technique detections from security logs. Assess the attack chain, identify the likely kill chain stage, and recommend immediate response actions.",
+                        )
 
                 # ════════════════════════════════════════════════════
                 # ANOMALY DETECTION TAB
