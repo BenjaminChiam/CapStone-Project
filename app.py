@@ -13,6 +13,7 @@ from utils.ioc_enrich import IOCEnricher
 from utils.mitre_mapper import MITREMapper
 from utils.sigma_generator import SigmaGenerator
 from utils.ml_engine import ThreatClusterer, AnomalyDetector, DGADetector
+from utils.mitre_attack_data import TACTICS, get_parent_techniques_by_tactic
 
 # ── Page Configuration ──────────────────────────────────────────────
 st.set_page_config(
@@ -449,6 +450,33 @@ if st.session_state.tool_output:
             conf_icon = {"HIGH": "🔴", "MEDIUM": "🟠", "LOW": "🟡"}.get(m.get("confidence", ""), "⚪")
             st.markdown(f"{conf_icon} **{m.get('technique_id', 'N/A')}** — {m.get('technique_name', 'Unknown')} ({m.get('tactic', '')})")
             st.caption(f"Reasoning: {m.get('reasoning', 'N/A')}")
+
+        # Extract matched technique IDs for highlighting
+        _matched_ids = {m.get("technique_id", "") for m in mapping.get("mappings", [])}
+        # Also match parent IDs (e.g., T1071 from T1071.001)
+        _matched_parents = {tid.split(".")[0] for tid in _matched_ids if "." in tid}
+        _all_matched = _matched_ids | _matched_parents
+
+        # Mini ATT&CK Matrix Grid View with highlights
+        st.markdown("#### 🗺️ ATT&CK Matrix — Detected Techniques Highlighted")
+        _matrix_cols = st.columns(len(TACTICS))
+        for _i, _tactic in enumerate(sorted(TACTICS, key=lambda t: t.order)):
+            with _matrix_cols[_i]:
+                st.markdown(f"**{_tactic.name}**")
+                _techs = get_parent_techniques_by_tactic(_tactic.id)
+                for _tech in _techs[:8]:
+                    if _tech.id in _all_matched:
+                        st.markdown(f"🔴 `{_tech.id}` **{_tech.name[:22]}**")
+                    else:
+                        st.caption(f"`{_tech.id}` {_tech.name[:22]}")
+                if len(_techs) > 8:
+                    with st.expander(f"+{len(_techs)-8} more"):
+                        for _tech in _techs[8:]:
+                            if _tech.id in _all_matched:
+                                st.markdown(f"🔴 `{_tech.id}` **{_tech.name[:22]}**")
+                            else:
+                                st.caption(f"`{_tech.id}` {_tech.name[:22]}")
+
         with st.expander("📋 Full Mapping Data"):
             st.json(mapping)
 
