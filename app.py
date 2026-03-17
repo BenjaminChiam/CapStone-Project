@@ -22,94 +22,52 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Theme State ─────────────────────────────────────────────────────
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
-
-# ── Light mode CSS overrides (only applied when light mode is on) ──
-_light_overrides = ""
-if not st.session_state.dark_mode:
-    _light_overrides = """
-    .stApp {
-        background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f8fafc 100%) !important;
-    }
-    .stChatMessage {
-        background: rgba(255, 255, 255, 0.85) !important;
-        border: 1px solid rgba(15, 23, 42, 0.1) !important;
-    }
-    section[data-testid="stSidebar"] {
-        background: rgba(248, 250, 252, 0.98) !important;
-        border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
-    }
-    section[data-testid="stSidebar"] * { color: #1e293b !important; }
-    .stTextInput > div > div > input,
-    .stChatInput > div > div > textarea {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border: 1px solid rgba(15, 23, 42, 0.15) !important;
-        color: #1e293b !important;
-    }
-    [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.7) !important;
-        border: 1px solid rgba(15, 23, 42, 0.08) !important;
-    }
-    [data-testid="stMetric"] label,
-    [data-testid="stMetric"] [data-testid="stMetricValue"] { color: #1e293b !important; }
-    .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
-    h1, h2, h3, h4, h5, h6 { color: #1e293b !important; }
-    .stCaption p, .stCaption span { color: #64748b !important; }
-    code { color: #6366f1 !important; background: rgba(99, 102, 241, 0.08) !important; }
-    .status-banner { color: #047857 !important; }
-    .env-badge { color: #4f46e5 !important; background: rgba(99, 102, 241, 0.1) !important;
-                 border-color: rgba(99, 102, 241, 0.3) !important; }
-"""
-
-# ── CSS ─────────────────────────────────────────────────────────────
-st.markdown(f"""
+# ── Custom CSS (Glass-morphism SOC dark theme) ──────────────────────
+st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
-
-    .stApp {{
+    .stApp {
         background: linear-gradient(135deg, #0a0e17 0%, #111827 50%, #0d1321 100%);
-    }}
-    .stChatMessage {{
+    }
+    .stChatMessage {
         background: rgba(17, 24, 39, 0.7) !important;
         backdrop-filter: blur(12px);
         border: 1px solid rgba(56, 189, 248, 0.08);
         border-radius: 12px;
         padding: 1rem;
-    }}
-    section[data-testid="stSidebar"] {{
+    }
+    section[data-testid="stSidebar"] {
         background: rgba(15, 23, 42, 0.95);
         border-right: 1px solid rgba(56, 189, 248, 0.1);
-    }}
-    h1, h2, h3 {{ font-family: 'Inter', sans-serif !important; }}
-    code, .stCode {{ font-family: 'JetBrains Mono', monospace !important; }}
-    .stButton > button {{
+    }
+    h1, h2, h3 { font-family: 'Inter', sans-serif !important; }
+    code, .stCode { font-family: 'JetBrains Mono', monospace !important; }
+    .stButton > button {
         background: linear-gradient(135deg, #1e3a5f, #0ea5e9) !important;
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
         transition: all 0.3s ease !important;
-    }}
-    .stButton > button:hover {{
+    }
+    .stButton > button:hover {
         background: linear-gradient(135deg, #0ea5e9, #38bdf8) !important;
         box-shadow: 0 0 20px rgba(14, 165, 233, 0.3) !important;
-    }}
+    }
     .stTextInput > div > div > input,
-    .stChatInput > div > div > textarea {{
+    .stChatInput > div > div > textarea {
         background: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(56, 189, 248, 0.2) !important;
         color: #e2e8f0 !important;
         border-radius: 8px !important;
-    }}
-    [data-testid="stMetric"] {{
+    }
+    [data-testid="stMetric"] {
         background: rgba(15, 23, 42, 0.6);
         border: 1px solid rgba(56, 189, 248, 0.1);
         border-radius: 10px;
         padding: 12px;
-    }}
-    .status-banner {{
+    }
+    .status-banner {
         background: rgba(16, 185, 129, 0.1);
         border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 8px;
@@ -118,8 +76,8 @@ st.markdown(f"""
         font-size: 0.85rem;
         text-align: center;
         margin-bottom: 1rem;
-    }}
-    .env-badge {{
+    }
+    .env-badge {
         background: rgba(139, 92, 246, 0.15);
         border: 1px solid rgba(139, 92, 246, 0.3);
         border-radius: 6px;
@@ -128,20 +86,17 @@ st.markdown(f"""
         font-size: 0.78rem;
         display: inline-block;
         margin: 2px;
-    }}
+    }
 
     /* Rename 'app' to 'Chatbot' in sidebar navigation */
-    [data-testid="stSidebarNav"] li:first-child a span {{
+    [data-testid="stSidebarNav"] li:first-child a span {
         font-size: 0;
-    }}
-    [data-testid="stSidebarNav"] li:first-child a span::before {{
+    }
+    [data-testid="stSidebarNav"] li:first-child a span::before {
         content: "Chatbot";
         font-size: 0.875rem;
         visibility: visible;
-    }}
-
-    /* Light mode overrides (applied conditionally) */
-    {_light_overrides}
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -480,15 +435,7 @@ with st.sidebar:
 
 
 # ── Main Chat Interface ─────────────────────────────────────────────
-# Theme toggle at top-right
-_theme_col1, _theme_col2 = st.columns([9, 1])
-with _theme_col1:
-    st.markdown("# 🧠 CognitiveHunt — AI-Enhanced Threat Intelligence Platform")
-with _theme_col2:
-    _icon = "☀️" if st.session_state.dark_mode else "🌙"
-    if st.button(_icon, key="theme_btn", help="Toggle Light/Dark Mode"):
-        st.session_state.dark_mode = not st.session_state.dark_mode
-        st.rerun()
+st.markdown("# 🧠 CognitiveHunt — AI-Enhanced Threat Intelligence Platform")
 st.markdown(
     "Ask me about IOCs, threat actors, MITRE ATT&CK techniques, detection rules, "
     "or paste indicators for analysis. I provide **triaging advice** tailored to your environment."
