@@ -255,6 +255,8 @@ if "investigation_log" not in st.session_state:
     st.session_state.investigation_log = []
 if "environment" not in st.session_state:
     st.session_state.environment = {}
+if "tool_output" not in st.session_state:
+    st.session_state.tool_output = None
 
 
 # ── Sidebar ─────────────────────────────────────────────────────────
@@ -309,50 +311,27 @@ with st.sidebar:
         with st.spinner(f"Enriching IOC across {active_count} source(s)..."):
             results = enricher.enrich(ioc_input, disabled_sources=disabled_sources)
             st.session_state.enrichment_results = results
-
-            # Display consensus score prominently
-            consensus = results.get("consensus", {})
-            level = consensus.get("threat_level", "UNKNOWN")
-            score = consensus.get("consensus_score", 0)
-
-            level_colors = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}
-            st.markdown(f"### {level_colors.get(level, '⚪')} {level} — Score: {score}/100")
-
-            for factor in consensus.get("scoring_factors", []):
-                st.caption(factor)
-
-            st.json(results)
-
-            summary = f"**IOC Enrichment Results for `{ioc_input}`:**\n```json\n{json.dumps(results, indent=2)}\n```"
-            st.session_state.messages.append({"role": "assistant", "content": summary})
+            st.session_state.tool_output = {"type": "enrich", "ioc": ioc_input, "data": results}
 
     if mitre_btn and ioc_input:
         if st.session_state.get("llm_enabled", True):
             with st.spinner("Mapping to MITRE ATT&CK..."):
                 mapping = mitre_mapper.map_ioc(ioc_input, st.session_state.enrichment_results)
-                st.json(mapping)
+                st.session_state.tool_output = {"type": "mitre", "ioc": ioc_input, "data": mapping}
         else:
             st.warning("OpenAI GPT is disabled. Enable it in API Sources to use MITRE mapping.")
 
     if sigma_btn and ioc_input:
         with st.spinner("Generating Sigma rule..."):
             rule = sigma_gen.generate(ioc_input)
-            st.code(rule, language="yaml")
-            st.download_button("⬇️ Download .yml", rule,
-                               file_name=f"sigma_{ioc_input.replace('.', '_')}.yml",
-                               mime="text/yaml")
+            st.session_state.tool_output = {"type": "sigma", "ioc": ioc_input, "data": rule}
 
     if dga_btn and ioc_input:
         with st.spinner("Analyzing for DGA patterns..."):
             dga_result = dga_detector.detect(ioc_input)
-            verdict = dga_result["verdict"]
-            dga_score = dga_result["dga_score"]
-            v_colors = {"LIKELY DGA": "🔴", "SUSPICIOUS": "🟡", "LIKELY LEGITIMATE": "🟢"}
-            st.markdown(f"### {v_colors.get(verdict, '⚪')} {verdict} — DGA Score: {dga_score}/100")
-            st.json(dga_result)
+            st.session_state.tool_output = {"type": "dga", "ioc": ioc_input, "data": dga_result}
 
     if triage_btn and ioc_input:
-        # Inject a triage request into chat
         triage_prompt = (
             f"I need you to triage this IOC: **{ioc_input}**\n\n"
             f"Please provide: severity classification (P1-P4), immediate actions, "
@@ -360,11 +339,13 @@ with st.sidebar:
             f"escalation criteria, containment recommendations, and evidence preservation steps."
         )
         st.session_state.messages.append({"role": "user", "content": triage_prompt})
+        st.session_state.tool_output = None
         st.rerun()
 
     if clear_btn:
         st.session_state.messages = []
         st.session_state.enrichment_results = None
+        st.session_state.tool_output = None
         st.rerun()
 
     # ── Sidebar footer ──────────────────────────────────────────────
@@ -440,6 +421,64 @@ st.markdown(
     "Ask me about IOCs, threat actors, MITRE ATT&CK techniques, detection rules, "
     "or paste indicators for analysis. I provide **triaging advice** tailored to your environment."
 )
+
+# ── Display Quick IOC Tool Results in Main Area ─────────────────────
+if st.session_state.tool_output:
+    _tool = st.session_state.tool_output
+    st.markdown("---")
+
+    if _tool["type"] == "enrich":
+        results = _tool["data"]
+        consensus = results.get("consensus", {})
+        level = consensus.get("threat_level", "UNKNOWN")
+        score = consensus.get("consensus_score", 0)
+        level_colors = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}
+
+        st.markdown(f"### {level_colors.get(level, '⚪')} IOC Enrichment: `{_tool['ioc']}` — {level} ({score}/100)")
+        for factor in consensus.get("scoring_factors", []):
+            st.caption(factor)
+        with st.expander("📋 Full Enrichment Data", expanded=True):
+            st.json(results)
+
+    elif _tool["type"] == "mitre":
+        mapping = _tool["data"]
+        st.markdown(f"### 🎯 MITRE ATT&CK Mapping: `{_tool['ioc']}`")
+        if mapping.get("overall_assessment"):
+            st.markdown(f"**Assessment:** {mapping['overall_assessment']}")
+        for m in mapping.get("mappings", []):
+            conf_icon = {"HIGH": "🔴", "MEDIUM": "🟠", "LOW": "🟡"}.get(m.get("confidence", ""), "⚪")
+            st.markdown(f"{conf_icon} **{m.get('technique_id', 'N/A')}** — {m.get('technique_name', 'Unknown')} ({m.get('tactic', '')})")
+            st.caption(f"Reasoning: {m.get('reasoning', 'N/A')}")
+        with st.expander("📋 Full Mapping Data"):
+            st.json(mapping)
+
+    elif _tool["type"] == "sigma":
+        st.markdown(f"### 📝 Sigma Rule: `{_tool['ioc']}`")
+        st.code(_tool["data"], language="yaml")
+        st.download_button("⬇️ Download .yml", _tool["data"],
+                           file_name=f"sigma_{_tool['ioc'].replace('.', '_').replace(':', '_')}.yml",
+                           mime="text/yaml")
+
+    elif _tool["type"] == "dga":
+        dga_result = _tool["data"]
+        verdict = dga_result["verdict"]
+        dga_score = dga_result["dga_score"]
+        v_colors = {"LIKELY DGA": "🔴", "SUSPICIOUS": "🟡", "LIKELY LEGITIMATE": "🟢"}
+        st.markdown(f"### {v_colors.get(verdict, '⚪')} DGA Analysis: `{_tool['ioc']}` — {verdict} ({dga_score}/100)")
+        feat = dga_result.get("features", {})
+        feat_cols = st.columns(5)
+        with feat_cols[0]:
+            st.metric("Entropy", feat.get("entropy", "N/A"))
+        with feat_cols[1]:
+            st.metric("Bigram Score", feat.get("bigram_score", "N/A"))
+        with feat_cols[2]:
+            st.metric("Vowel Ratio", feat.get("vowel_consonant_ratio", "N/A"))
+        with feat_cols[3]:
+            st.metric("Digit Ratio", feat.get("digit_ratio", "N/A"))
+        with feat_cols[4]:
+            st.metric("Body Length", feat.get("body_length", "N/A"))
+
+    st.markdown("---")
 
 # Display chat history
 for message in st.session_state.messages:
