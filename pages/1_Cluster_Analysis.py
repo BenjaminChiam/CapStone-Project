@@ -42,8 +42,17 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         method = st.selectbox("Algorithm", ["K-Means", "DBSCAN"])
+        if method == "K-Means":
+            st.caption("**K-Means** groups IOCs into a fixed number of clusters based on feature similarity. Best when you have an idea of how many threat campaigns to expect.")
+        else:
+            st.caption("**DBSCAN** finds clusters automatically based on density — no need to specify K. It also flags outliers as noise. Best for discovering unknown groupings.")
     with col2:
-        n_clusters = st.slider("Clusters (K-Means only)", 2, 8, 4) if method == "K-Means" else 4
+        if method == "K-Means":
+            n_clusters = st.slider("Clusters (K)", 2, 8, 4)
+            st.caption("Number of groups to split IOCs into. Start with 3–4 and adjust based on results. More clusters = finer separation.")
+        else:
+            n_clusters = 4
+            st.caption("DBSCAN determines cluster count automatically from data density.")
 
     if st.button("🔬 Run Cluster Analysis", use_container_width=True):
         iocs = []
@@ -121,6 +130,7 @@ with tab2:
     )
 
     contamination = st.slider("Contamination (expected % anomalies)", 0.05, 0.30, 0.10, 0.05)
+    st.caption("The expected proportion of outliers in the data. 0.10 = assume ~10% of IOCs are anomalous. Lower = stricter (fewer flagged), higher = more permissive (more flagged).")
 
     if st.button("⚠️ Run Anomaly Detection", use_container_width=True):
         iocs = []
