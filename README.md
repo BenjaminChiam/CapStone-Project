@@ -5,6 +5,10 @@ An AI-powered threat hunting and IOC analysis platform built with **Streamlit**,
 > **Capstone Project** — Automated IOC Enrichment and Threat Intel Visualization  
 > Singapore Institute of Technology: University of Applied Learning · 2025–2026
 
+### 🌐 Live Demo
+
+**[https://cognitivehunt-capstone-project-benchm-2102933.streamlit.app/](https://cognitivehunt-capstone-project-benchm-2102933.streamlit.app/)**
+
 ---
 
 ## ✨ Features
@@ -62,73 +66,190 @@ An AI-powered threat hunting and IOC analysis platform built with **Streamlit**,
 
 Log analysis includes: auto-detection, IOC extraction, 44 MITRE ATT&CK detection rules, timeline visualization with spike detection, top-talker analysis, and ML anomaly detection.
 
+### 🤖 AI-Powered Analysis (All Pages)
+Every analysis page includes a **"🧠 Ask AI to analyze"** button that sends the results to GPT-4o for deeper insights. Users can then ask follow-up questions in a dedicated chat interface per tab.
+
 ### 📝 Additional Capabilities
 | Feature | Description |
 |---|---|
 | **Sigma Rule Generator** | Auto-generates valid .yml detection rules for IPs, domains, and file hashes |
 | **Consensus Scoring** | Weighted multi-source voting algorithm (5 sources) for IOC risk assessment |
+| **API Source Toggles** | Enable/disable individual enrichment APIs from the sidebar |
 | **Environment Profiler** | Configure SIEM, EDR, firewall, cloud, OS, log sources, compliance frameworks |
 | **Investigation Log** | Full session history with search, JSON/CSV export for audit trails |
 | **IOC Export** | Extract and export IOCs from uploaded logs as JSON |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Python 3.10+
-- OpenAI API key ([get one here](https://platform.openai.com/api-keys))
-- Optional: VirusTotal, Shodan, AbuseIPDB API keys
-
-### Local Setup
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/BenjaminChiam/CapStone-Project.git
-cd CapStone-Project
-
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure API keys
-cp .env.example .env
-# Edit .env with your API keys
-
-# 5. Run the app
-streamlit run app.py
-```
-
-The app will open at `http://localhost:8501`.
-
-### Docker Setup
-
-```bash
-docker build -t cognitivehunt .
-docker run -p 8501:8501 --env-file .env cognitivehunt
-```
+- Python 3.10 or higher
+- An OpenAI API key — [get one here](https://platform.openai.com/api-keys) (required for chatbot and MITRE mapping)
+- Optional: VirusTotal, Shodan, AbuseIPDB API keys (for IOC enrichment)
 
 ---
 
-## ☁️ Deploy to Streamlit Community Cloud
+## Option 1: Run from Streamlit Community Cloud (Recommended — Free)
 
-1. Push your code to GitHub (ensure `.env` is in `.gitignore`)
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Click **New App** → select your repo → set main file as `app.py`
-4. Add secrets in **Advanced Settings** → `secrets.toml`:
+This is the easiest way. No local installation required.
+
+### Step 1: Create a Free Streamlit Account
+
+1. Go to [**share.streamlit.io**](https://share.streamlit.io)
+2. Click **"Sign up"** or **"Continue with GitHub"**
+3. Authorize Streamlit to access your GitHub account
+4. You now have a free Streamlit Community Cloud account
+
+### Step 2: Fork or Clone the Repository
+
+1. Go to [**github.com/BenjaminChiam/CapStone-Project**](https://github.com/BenjaminChiam/CapStone-Project)
+2. Click the **"Fork"** button (top-right) to copy it to your own GitHub account
+3. Alternatively, download the ZIP and create your own repository:
+   - Click **"Code" → "Download ZIP"**
+   - Extract the files
+   - Create a new GitHub repo and upload all the files to it
+
+### Step 3: Deploy on Streamlit Cloud
+
+1. Go to [**share.streamlit.io**](https://share.streamlit.io) and sign in
+2. Click **"New app"**
+3. Select your forked/created repository
+4. Set the following:
+   - **Repository:** your-username/CapStone-Project (or your repo name)
+   - **Branch:** main
+   - **Main file path:** app.py
+5. Click **"Advanced settings"** and paste your API keys in the **Secrets** box:
 
 ```toml
-OPENAI_API_KEY = "sk-..."
-VIRUSTOTAL_API_KEY = "..."
-SHODAN_API_KEY = "..."
-ABUSEIPDB_API_KEY = "..."
+OPENAI_API_KEY = "sk-your-openai-key-here"
+VIRUSTOTAL_API_KEY = "your-virustotal-key-here"
+SHODAN_API_KEY = "your-shodan-key-here"
+ABUSEIPDB_API_KEY = "your-abuseipdb-key-here"
 ```
 
-5. Click **Deploy**
+6. Click **"Save"**, then click **"Deploy"**
+7. Wait 3–5 minutes for the initial build (dependencies are cached for subsequent deploys)
+8. Your app will be live at `https://your-app-name.streamlit.app`
+
+> **Note:** URLhaus and MalwareBazaar do not require API keys — they work out of the box.
+
+---
+
+## Option 2: Run Locally on Your Computer
+
+### Step 1: Download the Project
+
+**From GitHub:**
+```bash
+git clone https://github.com/BenjaminChiam/CapStone-Project.git
+cd CapStone-Project
+```
+
+**Or from ZIP download:**
+1. Download the ZIP from the GitHub repository
+2. Extract it to a folder (e.g., `C:\Users\YourName\CapStone-Project`)
+3. Open a terminal/command prompt and navigate to that folder:
+```bash
+cd path/to/CapStone-Project
+```
+
+### Step 2: Set Up Python Environment
+
+```bash
+# Create a virtual environment
+python -m venv venv
+
+# Activate it
+# Windows:
+venv\Scripts\activate
+# macOS / Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Step 3: Configure API Keys
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+```
+
+Open `.env` in a text editor and fill in your API keys:
+```
+OPENAI_API_KEY=sk-your-openai-key-here
+VIRUSTOTAL_API_KEY=your-virustotal-key-here
+SHODAN_API_KEY=your-shodan-key-here
+ABUSEIPDB_API_KEY=your-abuseipdb-key-here
+```
+
+### Step 4: Run the App
+
+```bash
+streamlit run app.py
+```
+
+The app will automatically open in your browser at `http://localhost:8501`.
+
+> **Tip:** If you get `streamlit is not recognized`, try: `python -m streamlit run app.py`
+
+---
+
+## Option 3: Deploy with Docker (Advanced)
+
+For users who want to containerize the application or deploy it on a server.
+
+### Step 1: Install Docker
+
+- **Windows / macOS:** Download [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Linux:** Install via your package manager (e.g., `sudo apt install docker.io`)
+
+### Step 2: Download the Project
+
+```bash
+git clone https://github.com/BenjaminChiam/CapStone-Project.git
+cd CapStone-Project
+```
+
+### Step 3: Create a `.env` File
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+### Step 4: Build the Docker Image
+
+```bash
+docker build -t cognitivehunt .
+```
+
+### Step 5: Run the Container
+
+```bash
+docker run -p 8501:8501 --env-file .env cognitivehunt
+```
+
+The app will be available at `http://localhost:8501`.
+
+### Step 6: Deploy to a Cloud Server (Optional)
+
+To deploy on a cloud VM (e.g., AWS EC2, Azure VM, DigitalOcean):
+
+1. SSH into your server
+2. Install Docker: `sudo apt update && sudo apt install docker.io`
+3. Clone the repo: `git clone https://github.com/BenjaminChiam/CapStone-Project.git`
+4. Build and run:
+```bash
+cd CapStone-Project
+docker build -t cognitivehunt .
+docker run -d -p 8501:8501 --env-file .env --restart unless-stopped cognitivehunt
+```
+5. Access via `http://your-server-ip:8501`
+6. (Optional) Set up a reverse proxy (Nginx) with SSL for HTTPS access
 
 ---
 
@@ -144,6 +265,7 @@ CapStone-Project/
 │   └── 4_MITRE ATT&CK.py          # ATT&CK Navigator, group analysis, coverage tracker
 ├── utils/
 │   ├── __init__.py
+│   ├── ai_chat.py                  # Reusable AI analysis chat component
 │   ├── ioc_enrich.py               # 5-source IOC enrichment pipeline
 │   ├── log_analyzer.py             # Log parsers, IOC extraction, 44 MITRE detection rules
 │   ├── mitre_attack_data.py        # ATT&CK data: 14 tactics, 120+ techniques, 10 APTs, 10 tools
@@ -153,11 +275,11 @@ CapStone-Project/
 │   └── sigma_generator.py          # Sigma rule auto-generation (IP/domain/hash templates)
 ├── .streamlit/
 │   └── config.toml                 # Streamlit theme (SOC dark mode)
-├── requirements.txt
-├── Dockerfile
-├── .env.example
-├── .gitignore
-└── README.md
+├── requirements.txt                # Python dependencies
+├── Dockerfile                      # Docker containerization
+├── .env.example                    # Template for API keys
+├── .gitignore                      # Git ignore rules
+└── README.md                       # This file
 ```
 
 ---
@@ -173,23 +295,26 @@ CapStone-Project/
 │  │          │ │ Detection │ │ Analyzer   │ │ Tracker          │ │
 │  └────┬─────┘ └─────┬─────┘ └─────┬──────┘ └────────┬─────────┘ │
 │       │             │             │                  │            │
-├───────┼─────────────┼─────────────┼──────────────────┼────────────┤
-│       ▼             ▼             ▼                  ▼   Backend  │
-│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────────┐ │
-│  │ OpenAI  │  │ ML Engine│  │ Log      │  │ MITRE ATT&CK       │ │
-│  │ GPT-4o  │  │ (5 algo) │  │ Parsers  │  │ Data Model         │ │
-│  └────┬────┘  └──────────┘  │ (11 types│  │ (14 Tactics,       │ │
-│       │                     └──────────┘  │  120+ Techniques,   │ │
-│  ┌────┴──────────────────────────────┐    │  10 APT Groups,     │ │
-│  │    IOC Enrichment Pipeline (x5)   │    │  10 Software)       │ │
-│  │  VT │ Shodan │ AbuseIPDB         │    └────────────────────┘ │
+│  ┌────┴─────────────┴─────────────┴──────────────────┴─────────┐ │
+│  │              🤖 AI-Powered Analysis (per tab)                │ │
+│  └──────────────────────────┬──────────────────────────────────┘ │
+├─────────────────────────────┼────────────────────────────────────┤
+│                             ▼                        Backend     │
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
+│  │ OpenAI  │  │ ML Engine│  │ Log      │  │ MITRE ATT&CK     │  │
+│  │ GPT-4o  │  │ (5 algo) │  │ Parsers  │  │ Data Model       │  │
+│  └────┬────┘  └──────────┘  │ (11 types│  │ (14 Tactics,     │  │
+│       │                     └──────────┘  │  120+ Techniques, │  │
+│  ┌────┴──────────────────────────────┐    │  10 APT Groups,   │  │
+│  │    IOC Enrichment Pipeline (x5)   │    │  10 Software)     │  │
+│  │  VT │ Shodan │ AbuseIPDB         │    └──────────────────┘  │
 │  │  URLhaus │ MalwareBazaar         │                           │
-│  └──────────────┬────────────────────┘                           │
-│                 │                                                 │
-│  ┌──────────────┴──────────────────────────────────────────┐     │
-│  │  Consensus Scoring │ MITRE Mapper │ Sigma Generator     │     │
-│  │  Hallucination Guard │ Triaging Engine │ Env Profiler   │     │
-│  └─────────────────────────────────────────────────────────┘     │
+│  └──────────────┬────────────────────┘                          │
+│                 │                                                │
+│  ┌──────────────┴──────────────────────────────────────────┐    │
+│  │  Consensus Scoring │ MITRE Mapper │ Sigma Generator     │    │
+│  │  Hallucination Guard │ Triaging Engine │ Env Profiler   │    │
+│  └─────────────────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -206,7 +331,7 @@ CapStone-Project/
 
 ### Quick IOC Tools (Sidebar)
 1. Paste an IOC → Click **🔍 Enrich** for 5-source analysis
-2. Click **🎯 MITRE** for ATT&CK mapping with LLM reasoning
+2. Click **🎯 MITRE** for ATT&CK mapping with LLM reasoning + matrix grid view
 3. Click **📝 Sigma** to generate and download a detection rule
 4. Click **🧬 DGA** for Domain Generation Algorithm analysis
 5. Click **🚨 Triage** for structured P1–P4 incident response guidance
@@ -219,6 +344,9 @@ CapStone-Project/
 5. Check **Anomaly Detection** tab for ML-flagged suspicious IPs and DGA domains
 6. Export extracted IOCs as JSON for further investigation
 
+### AI-Powered Analysis
+After any analysis completes (clustering, DGA scan, MITRE mapping, etc.), click the **"🧠 Ask AI to analyze"** button for GPT-4o insights. You can then ask follow-up questions in the dedicated chat.
+
 ---
 
 ## 🔐 Security Notes
@@ -226,7 +354,7 @@ CapStone-Project/
 - **Never commit API keys** — use `.env` locally or Streamlit secrets for cloud deployment
 - The MITRE mapper validates all LLM outputs against a local dictionary of 400+ technique IDs to prevent hallucinated technique IDs
 - URLhaus and MalwareBazaar enrichment sources require no API keys (free public APIs)
-- For production use, consider adding authentication and Upstash Redis for caching
+- API sources can be individually enabled/disabled from the sidebar toggles
 
 ---
 
