@@ -286,37 +286,9 @@ CapStone-Project/
 
 ## 🧠 Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     Streamlit Frontend                            │
-│  ┌──────────┐ ┌───────────┐ ┌────────────┐ ┌──────────────────┐ │
-│  │ Chatbot  │ │ ML Cluster│ │ Invest.Log │ │ MITRE Navigator  │ │
-│  │ (GPT-4o) │ │ & Anomaly │ │ & Log      │ │ & Coverage       │ │
-│  │          │ │ Detection │ │ Analyzer   │ │ Tracker          │ │
-│  └────┬─────┘ └─────┬─────┘ └─────┬──────┘ └────────┬─────────┘ │
-│       │             │             │                  │            │
-│  ┌────┴─────────────┴─────────────┴──────────────────┴─────────┐ │
-│  │              🤖 AI-Powered Analysis (per tab)                │ │
-│  └──────────────────────────┬──────────────────────────────────┘ │
-├─────────────────────────────┼────────────────────────────────────┤
-│                             ▼                        Backend     │
-│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ OpenAI  │  │ ML Engine│  │ Log      │  │ MITRE ATT&CK     │  │
-│  │ GPT-4o  │  │ (5 algo) │  │ Parsers  │  │ Data Model       │  │
-│  └────┬────┘  └──────────┘  │ (11 types│  │ (14 Tactics,     │  │
-│       │                     └──────────┘  │  120+ Techniques, │  │
-│  ┌────┴──────────────────────────────┐    │  10 APT Groups,   │  │
-│  │    IOC Enrichment Pipeline (x5)   │    │  10 Software)     │  │
-│  │  VT │ Shodan │ AbuseIPDB         │    └──────────────────┘  │
-│  │  URLhaus │ MalwareBazaar         │                           │
-│  └──────────────┬────────────────────┘                          │
-│                 │                                                │
-│  ┌──────────────┴──────────────────────────────────────────┐    │
-│  │  Consensus Scoring │ MITRE Mapper │ Sigma Generator     │    │
-│  │  Hallucination Guard │ Triaging Engine │ Env Profiler   │    │
-│  └─────────────────────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────────────────────┘
-```
+![CognitiveHunt Architecture](architecture.png)
+
+*Figure 1: CognitiveHunt System Architecture — Streamlit Frontend with four main pages, AI-Powered Analysis layer, and Backend components including GPT-4o, ML Engine, Log Parsers, MITRE ATT&CK Data Model, IOC Enrichment Pipeline, and processing engines.*
 
 ---
 
